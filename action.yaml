@@ -90,7 +90,6 @@ runs:
         echo "$RANDOM_USER"
 
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-        # TODO: add JSON to output
         { echo "all_users<<$EOF";   echo "$ALL_USERS";   echo "$EOF"; } >> $GITHUB_OUTPUT
         { echo "user<<$EOF";        echo "$USER";        echo "$EOF"; } >> $GITHUB_OUTPUT
         { echo "random_user<<$EOF"; echo "$RANDOM_USER"; echo "$EOF"; } >> $GITHUB_OUTPUT
