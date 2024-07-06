@@ -1,0 +1,96 @@
+name: Find On-Call from PagerDuty
+description: Get current on-call users from PagerDuty
+author: tippy3
+branding:
+  icon: user
+  color: green
+inputs:
+  token:
+    description: PagerDuty API token or API key
+    required: true
+  escalation_policy_id:
+    description: Escalation policy ID
+    required: false
+    default: ''
+  escalation_policy_name:
+    description: Escalation policy name
+    required: false
+    default: ''
+  filter:
+    description: Filter to get on-calls. Set 'Level=1' to get 1st responders or '' to get all responders.
+    required: false
+    default: 'Level=1'
+outputs:
+  all_users:
+    description: All on-call users
+    value: ${{ steps.get_oncall.outputs.all_users }}
+  user:
+    description: Only the first user
+    value: ${{ steps.get_oncall.outputs.user }}
+  random_user:
+    description: One user at random
+    value: ${{ steps.get_oncall.outputs.random_user }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        # Install PagerDuty CLI
+        if [ -e /usr/local/lib/pd -o -e /usr/local/bin/pd ]; then
+          echo "PagerDuty CLI is already installed."
+          exit 0
+        fi
+        sh -c "$(curl -sL https://raw.githubusercontent.com/martindstone/pagerduty-cli/v0.1.18/install.sh)"
+
+    - shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        EP_ID: ${{ inputs.escalation_policy_id }}
+        EP_NAME: ${{ inputs.escalation_policy_name }}
+      run: |
+        # Check inputs
+        if [ -z "$TOKEN" ]; then
+          echo "token is required." 1>&2
+          exit 1
+        elif [ -z "$EP_ID" ] && [ -z "$EP_NAME" ]; then
+          echo "Either escalation_policy_id or escalation_policy_name is required." 1>&2
+          exit 1
+        elif [ -n "$EP_ID" ] && [ -n "$EP_NAME" ]; then
+          echo "You must specify either escalation_policy_id or escalation_policy_name." 1>&2
+          exit 1
+        fi
+
+    - id: get_oncall
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        EP_ID: ${{ inputs.escalation_policy_id }}
+        EP_NAME: ${{ inputs.escalation_policy_name }}
+        FILTER: ${{ inputs.filter }}
+      run: |
+        # Get on-call users
+        if [ -n "$EP_ID" ]; then
+          RESPONSE="$(pd ep oncall -i "$EP_ID" --filter="$FILTER" --token="$TOKEN" --output=json)"
+        else
+          RESPONSE="$(pd ep oncall -n "$EP_NAME" --filter="$FILTER" --token="$TOKEN" --output=json)"
+        fi
+
+        JSON="$(echo "{ \"on_call\": $RESPONSE}" | jq -r .)"
+        ALL_USERS="$(echo "$JSON" | jq -r '.on_call[].user_name' | sort | uniq)"
+        USER="$(echo "$ALL_USERS" | head -n 1)"
+        RANDOM_USER="$(echo "$ALL_USERS" | shuf | head -n 1)"
+
+        echo "# JSON"
+        echo "$JSON"
+        echo "# ALL_USERS"
+        echo "$ALL_USERS"
+        echo "# USER"
+        echo "$USER"
+        echo "# RANDOM_USER"
+        echo "$RANDOM_USER"
+
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        # TODO: add JSON to output
+        { echo "all_users<<$EOF";   echo "$ALL_USERS";   echo "$EOF"; } >> $GITHUB_OUTPUT
+        { echo "user<<$EOF";        echo "$USER";        echo "$EOF"; } >> $GITHUB_OUTPUT
+        { echo "random_user<<$EOF"; echo "$RANDOM_USER"; echo "$EOF"; } >> $GITHUB_OUTPUT

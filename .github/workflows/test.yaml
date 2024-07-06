@@ -1,0 +1,49 @@
+name: test
+
+on:
+  push:
+    branches:    
+      - main
+    paths-ignore:
+      - LICENSE
+      - README.md
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: test1
+        id: test1
+        uses: ./
+        with:
+          token: ${{ secrets.PAGERDUTY_TOKEN }}
+          escalation_policy_id: ${{ secrets.PAGERDUTY_EP_ID }}
+
+      - name: echo results
+        run: |
+          echo "# ALL_USERS"
+          echo "${{ steps.test1.outputs.all_users }}"
+          echo "# USER"
+          echo "${{ steps.test1.outputs.user }}"
+          echo "# RANDOM_USER"
+          echo "${{ steps.test1.outputs.random_user }}"
+
+      - name: test2
+        id: test2
+        uses: ./
+        with:
+          token: ${{ secrets.PAGERDUTY_TOKEN }}
+          escalation_policy_name: ${{ secrets.PAGERDUTY_EP_NAME }}
+          filter: ''
+
+      - name: echo results
+        run: |
+          echo "# ALL_USERS"
+          echo "${{ steps.test2.outputs.all_users }}"
+          echo "# USER"
+          echo "${{ steps.test2.outputs.user }}"
+          echo "# RANDOM_USER"
+          echo "${{ steps.test2.outputs.random_user }}"
