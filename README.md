@@ -27,7 +27,7 @@ with:
   token: ''
 
   # Escalation policy ID
-  escalation_policy_ID: ''
+  escalation_policy_id: ''
 
   # Escalation policy name. Either the ID or the name is required.
   escalation_policy_name: ''
