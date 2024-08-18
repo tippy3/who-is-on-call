@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: oncall
-        uses: tippy3/who-is-on-call@v1.0.1
+        uses: tippy3/who-is-on-call@v1
         with:
           token: ${{ secrets.PAGERDUTY_TOKEN }}
           escalation_policy_name: 'your-policy-name'
@@ -21,7 +21,7 @@ jobs:
 ## Inputs
 
 ```yaml
-uses: tippy3/who-is-on-call@v1.0.1
+uses: tippy3/who-is-on-call@v1
 with:
   # [Required] PagerDuty API token or API key
   token: ''
